@@ -1,41 +1,40 @@
 import MerkleTree from "merkletreejs"
 import keccak256 from "keccak256"
 
+const printPretty = (buffer: Buffer) => {
+  let pretty = buffer.reduce((acc, byte) => {
+    return acc + byte.toString() + ', '
+  }, '')
+  return pretty
+}
+
 async function main() {
-  const leaves = ['a', 'b'].map(x => {
+  const bannedAddress = 'EFswvxFPzSkpPEgMuAHZrsRZsctJooUswcwYNQiMtYCH'
+  const allowedAddress = [
+    '5c1HBqtcU7227XAhrWtAdvVWTJvgehYo3Hp2ieNxEfM6',
+    'FRn4iGBdh3r451HkdyJmWNHTa7w2HzzE2qZryEY3z9Uh'
+  ]
+  const leaves = allowedAddress.map(x => {
     console.log('Leaf:', x)
-    console.log('Hash:', keccak256(x))
-    let pretty = keccak256(x).reduce((acc, byte) => {
-      return acc + byte.toString() + ', '
-    }, '')
-    console.log('Pretty:', pretty)
-    // console.log('Hash:', keccak256(x).toString('hex'))
+    console.log('pretty leaf', printPretty(keccak256(x)))
     console.log('\n')
     return keccak256(x)
   })
   const tree = new MerkleTree(leaves, keccak256)
   const root = tree.getRoot()
-  console.log('Root:', root)
-  const prettyRoot = root.reduce((acc, byte) => {
-    return acc + byte.toString() + ', '
-  }, '')
-  console.log('Pretty Root:', prettyRoot)
+  console.log('pretty root', printPretty(root))
+  console.log('\n')
 
-  const leaf = keccak256('a')
+  const leaf = keccak256(allowedAddress[0])
   const proof = tree.getProof(leaf)
   console.log('Proof:', proof)
-  proof.forEach(proofOuter => {
-    let prettyProof = proofOuter.data.reduce((acc, byte) => {
-      return acc + byte.toString() + ', '
-    }, '')
-    console.log('Pretty Proof:', prettyProof)
+  proof.forEach(proofInner => {
+    console.log('pretty proof', printPretty(proofInner.data))
   })
+  console.log('\n')
+
   const result = keccak256(Buffer.concat([leaf, proof[0].data]))
-  let prettyResult = result.reduce((acc, byte) => {
-    return acc + byte.toString() + ', '
-  }, '')
-  console.log('Pretty Result:', prettyResult)
-  console.log('Result:', result.toString('hex'))
+  console.log('pretty result', printPretty(result))
 }
 
 main().catch((error) => {
